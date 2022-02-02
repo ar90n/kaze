@@ -420,33 +420,6 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Cannot generate code for module \"A\" because it has a recursive definition formed by an instance of itself called \"a\"."
-    )]
-    fn recursive_module_definition_error1() {
-        let c = Context::new();
-
-        let a = c.module("a", "A");
-
-        // Panic
-        generate(a, Vec::new()).unwrap();
-    }
-
-    #[test]
-    #[should_panic(
-        expected = "Cannot generate code for module \"A\" because it has a recursive definition formed by an instance of itself called \"a\" in module \"B\"."
-    )]
-    fn recursive_module_definition_error2() {
-        let c = Context::new();
-
-        let a = c.module("a", "A");
-        let b = a.module("b", "B");
-
-        // Panic
-        generate(a, Vec::new()).unwrap();
-    }
-
-    #[test]
-    #[should_panic(
         expected = "Cannot generate code for module \"A\" because module \"A\" contains an instance of module \"B\" called \"b\" whose input \"i\" is not driven."
     )]
     fn undriven_instance_input_error() {
@@ -551,18 +524,16 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "Cannot generate code for module \"b\" because module \"a\" contains an output called \"o\" which forms a combinational loop with itself."
+        expected = "Cannot generate code for module \"B\" because module \"A\" contains an output called \"o\" which forms a combinational loop with itself."
     )]
     fn combinational_loop_error() {
         let c = Context::new();
 
-        let a = c.module("a", "A");
-        a.output("o", a.input("i", 1));
-
         let b = c.module("b", "B");
-        let a_inst = b.module("a_inst", "A");
-        let a_inst_o = a_inst.output("o");
-        a_inst.input("i", a_inst_o);
+        let a = b.module("a", "A");
+        let a_in = a.input("i", 1);
+        let a_out = a.output("o", a_in);
+        a_in.drive(a_out);
 
         // Panic
         generate(b, Vec::new()).unwrap();

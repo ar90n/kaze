@@ -2386,19 +2386,60 @@ mod tests {
                                 "inner1",
                                 CaptureModule {
                                     children: BTreeMap::new(),
-                                    signals: vec![(
-                                        "r",
-                                        Rc::new(CaptureSignal {
-                                            bit_width: 32,
-                                            type_: TraceValueType::U32,
-                                            values: RefCell::new(vec![
-                                                (0, TraceValue::U32(0)),
-                                                (0, TraceValue::U32(0)),
-                                                (1, TraceValue::U32(0xffff0000)),
-                                                (2, TraceValue::U32(0xffff0000)),
-                                            ]),
-                                        })
-                                    ),]
+                                    signals: vec![
+                                        (
+                                            "i1",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0xffffffff)),
+                                                    (1, TraceValue::U32(0xffffffff)),
+                                                    (2, TraceValue::U32(0xffffffff)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "i2",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0xffff0000)),
+                                                    (1, TraceValue::U32(0xffff0000)),
+                                                    (2, TraceValue::U32(0xffff0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "o",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0)),
+                                                    (1, TraceValue::U32(0xffff0000)),
+                                                    (2, TraceValue::U32(0xffff0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "r",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0)),
+                                                    (1, TraceValue::U32(0xffff0000)),
+                                                    (2, TraceValue::U32(0xffff0000)),
+                                                ]),
+                                            })
+                                        ),
+                                    ]
                                     .into_iter()
                                     .collect(),
                                 }
@@ -2407,19 +2448,60 @@ mod tests {
                                 "inner2",
                                 CaptureModule {
                                     children: BTreeMap::new(),
-                                    signals: vec![(
-                                        "r",
-                                        Rc::new(CaptureSignal {
-                                            bit_width: 32,
-                                            type_: TraceValueType::U32,
-                                            values: RefCell::new(vec![
-                                                (0, TraceValue::U32(0)),
-                                                (0, TraceValue::U32(0)),
-                                                (1, TraceValue::U32(0x000f0000)),
-                                                (2, TraceValue::U32(0x000f0000)),
-                                            ]),
-                                        })
-                                    ),]
+                                    signals: vec![
+                                        (
+                                            "i1",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0x00ff0000)),
+                                                    (1, TraceValue::U32(0x00ff0000)),
+                                                    (2, TraceValue::U32(0x00ff0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "i2",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0x000f0000)),
+                                                    (1, TraceValue::U32(0x000f0000)),
+                                                    (2, TraceValue::U32(0x000f0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "o",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0)),
+                                                    (1, TraceValue::U32(0x000f0000)),
+                                                    (2, TraceValue::U32(0x000f0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "r",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0)),
+                                                    (1, TraceValue::U32(0x000f0000)),
+                                                    (2, TraceValue::U32(0x000f0000)),
+                                                ]),
+                                            })
+                                        ),
+                                    ]
                                     .into_iter()
                                     .collect(),
                                 }
@@ -2428,19 +2510,60 @@ mod tests {
                                 "inner3",
                                 CaptureModule {
                                     children: BTreeMap::new(),
-                                    signals: vec![(
-                                        "r",
-                                        Rc::new(CaptureSignal {
-                                            bit_width: 32,
-                                            type_: TraceValueType::U32,
-                                            values: RefCell::new(vec![
-                                                (0, TraceValue::U32(0)),
-                                                (0, TraceValue::U32(0)),
-                                                (1, TraceValue::U32(0)),
-                                                (2, TraceValue::U32(0x000f0000)),
-                                            ]),
-                                        })
-                                    ),]
+                                    signals: vec![
+                                        (
+                                            "i1",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0x00000000)),
+                                                    (1, TraceValue::U32(0xffff0000)),
+                                                    (2, TraceValue::U32(0xffff0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "i2",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0x00000000)),
+                                                    (1, TraceValue::U32(0x000f0000)),
+                                                    (2, TraceValue::U32(0x000f0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "o",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0)),
+                                                    (1, TraceValue::U32(0)),
+                                                    (2, TraceValue::U32(0x000f0000)),
+                                                ]),
+                                            })
+                                        ),
+                                        (
+                                            "r",
+                                            Rc::new(CaptureSignal {
+                                                bit_width: 32,
+                                                type_: TraceValueType::U32,
+                                                values: RefCell::new(vec![
+                                                    (0, TraceValue::U32(0)),
+                                                    (0, TraceValue::U32(0)),
+                                                    (1, TraceValue::U32(0)),
+                                                    (2, TraceValue::U32(0x000f0000)),
+                                                ]),
+                                            })
+                                        ),
+                                    ]
                                     .into_iter()
                                     .collect(),
                                 }
