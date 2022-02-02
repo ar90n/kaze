@@ -10,6 +10,7 @@ use module_decls::*;
 
 use crate::code_writer;
 use crate::graph;
+use crate::internal_signal;
 use crate::validation::*;
 
 use std::collections::HashMap;
@@ -19,20 +20,20 @@ use std::io::{Result, Write};
 pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
     validate_module_hierarchy(m);
 
-    let mut instances = HashMap::new();
-    for instance in m.instances.borrow().iter() {
+    let mut modules = HashMap::new();
+    for module in m.modules.borrow().iter() {
         let mut input_names = HashMap::new();
-        for (name, _) in instance.instantiated_module.inputs.borrow().iter() {
-            input_names.insert(name.clone(), format!("__{}_input_{}", instance.name, name));
+        for (name, _) in module.inputs.borrow().iter() {
+            input_names.insert(name.clone(), format!("__{}_input_{}", module.name, name));
         }
 
         let mut output_names = HashMap::new();
-        for (name, _) in instance.instantiated_module.outputs.borrow().iter() {
-            output_names.insert(name.clone(), format!("__{}_output_{}", instance.name, name));
+        for (name, _) in module.outputs.borrow().iter() {
+            output_names.insert(name.clone(), format!("__{}_output_{}", module.name, name));
         }
 
-        instances.insert(
-            *instance,
+        modules.insert(
+            *module,
             InstanceDecls {
                 input_names,
                 output_names,
@@ -73,7 +74,7 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
     let mut regs = HashMap::new();
     for reg in m.registers.borrow().iter() {
         match reg.data {
-            graph::SignalData::Reg { data } => {
+            internal_signal::SignalData::Reg { data } => {
                 let value_name = format!("__reg_{}_{}", data.name, regs.len());
                 let next_name = format!("{}_next", value_name);
                 regs.insert(
@@ -90,7 +91,7 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
     }
 
     let module_decls = ModuleDecls {
-        instances,
+        modules,
         mems,
         regs,
     };
@@ -99,7 +100,7 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
 
     let mut assignments = AssignmentContext::new();
     for (name, output) in m.outputs.borrow().iter() {
-        let expr = c.compile_signal(&output, &module_decls, &mut assignments);
+        let expr = c.compile_signal(output.data.source, &module_decls, &mut assignments);
         assignments.push(Assignment {
             target_name: name.clone(),
             expr,
@@ -108,16 +109,16 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
 
     let mut node_decls = Vec::new();
 
-    for (instance, instance_decls) in module_decls.instances.iter() {
+    for (instance, instance_decls) in module_decls.modules.iter() {
         for (name, decl_name) in instance_decls.input_names.iter() {
             node_decls.push(NodeDecl {
                 net_type: NetType::Wire,
                 name: decl_name.clone(),
-                bit_width: instance.instantiated_module.inputs.borrow()[name].bit_width(),
+                bit_width: instance.inputs.borrow()[name].value.bit_width(),
             });
 
             let expr = c.compile_signal(
-                instance.driven_inputs.borrow()[name],
+                instance.inputs.borrow()[name].value,
                 &module_decls,
                 &mut assignments,
             );
@@ -131,7 +132,7 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
             node_decls.push(NodeDecl {
                 net_type: NetType::Wire,
                 name: decl_name.clone(),
-                bit_width: instance.instantiated_module.outputs.borrow()[name].bit_width(),
+                bit_width: instance.outputs.borrow()[name].data.source.bit_width(),
             });
         }
     }
@@ -240,8 +241,8 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
     for (i, (name, source)) in inputs.iter().enumerate() {
         w.append_indent()?;
         w.append("input wire ")?;
-        if source.bit_width() > 1 {
-            w.append(&format!("[{}:{}] ", source.bit_width() - 1, 0))?;
+        if source.value.bit_width() > 1 {
+            w.append(&format!("[{}:{}] ", source.value.bit_width() - 1, 0))?;
         }
         w.append(name)?;
         if !m.outputs.borrow().is_empty() || i < num_inputs - 1 {
@@ -254,8 +255,8 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
     for (i, (name, output)) in outputs.iter().enumerate() {
         w.append_indent()?;
         w.append("output wire ")?;
-        if output.bit_width() > 1 {
-            w.append(&format!("[{}:{}] ", output.bit_width() - 1, 0))?;
+        if output.data.bit_width > 1 {
+            w.append(&format!("[{}:{}] ", output.data.bit_width - 1, 0))?;
         }
         w.append(name)?;
         if i < num_outputs - 1 {
@@ -273,10 +274,10 @@ pub fn generate<'a, W: Write>(m: &'a graph::Module<'a>, w: W) -> Result<()> {
         w.append_newline()?;
     }
 
-    for (instance, instance_decls) in module_decls.instances.iter() {
+    for (instance, instance_decls) in module_decls.modules.iter() {
         w.append_line(&format!(
             "{} {}(",
-            instance.instantiated_module.name, instance.name
+            instance.name, instance.name
         ))?;
         w.indent();
         // TODO: Make conditional based on the presence of (resetable) state elements
@@ -424,9 +425,7 @@ mod tests {
     fn recursive_module_definition_error1() {
         let c = Context::new();
 
-        let a = c.module("A");
-
-        let _ = a.instance("a", "A");
+        let a = c.module("a", "A");
 
         // Panic
         generate(a, Vec::new()).unwrap();
@@ -439,11 +438,8 @@ mod tests {
     fn recursive_module_definition_error2() {
         let c = Context::new();
 
-        let a = c.module("A");
-        let b = c.module("B");
-
-        let _ = a.instance("b", "B");
-        let _ = b.instance("a", "A");
+        let a = c.module("a", "A");
+        let b = a.module("b", "B");
 
         // Panic
         generate(a, Vec::new()).unwrap();
@@ -456,11 +452,9 @@ mod tests {
     fn undriven_instance_input_error() {
         let c = Context::new();
 
-        let a = c.module("A");
-        let b = c.module("B");
+        let a = c.module("a", "A");
+        let b = a.module("b", "B");
         let _ = b.input("i", 1);
-
-        let _ = a.instance("b", "B");
 
         // Panic
         generate(a, Vec::new()).unwrap();
@@ -473,7 +467,7 @@ mod tests {
     fn undriven_register_error1() {
         let c = Context::new();
 
-        let a = c.module("A");
+        let a = c.module("a", "A");
         let _ = a.reg("r", 1);
 
         // Panic
@@ -487,11 +481,9 @@ mod tests {
     fn undriven_register_error2() {
         let c = Context::new();
 
-        let a = c.module("A");
-        let b = c.module("B");
+        let a = c.module("a", "A");
+        let b = a.module("b", "B");
         let _ = b.reg("r", 1);
-
-        let _ = a.instance("b", "B");
 
         // Panic
         generate(a, Vec::new()).unwrap();
@@ -504,7 +496,7 @@ mod tests {
     fn mem_without_read_ports_error1() {
         let c = Context::new();
 
-        let a = c.module("A");
+        let a = c.module("a", "A");
         let _ = a.mem("m", 1, 1);
 
         // Panic
@@ -518,11 +510,9 @@ mod tests {
     fn mem_without_read_ports_error2() {
         let c = Context::new();
 
-        let a = c.module("A");
-        let b = c.module("B");
+        let a = c.module("a", "A");
+        let b = a.module("b", "B");
         let _ = b.mem("m", 1, 1);
-
-        let _ = a.instance("b", "B");
 
         // Panic
         generate(a, Vec::new()).unwrap();
@@ -535,7 +525,7 @@ mod tests {
     fn mem_without_initial_contents_or_write_port_error1() {
         let c = Context::new();
 
-        let a = c.module("A");
+        let a = c.module("a", "A");
         let m = a.mem("m", 1, 1);
         let _ = m.read_port(a.low(), a.low());
 
@@ -550,12 +540,10 @@ mod tests {
     fn mem_without_initial_contents_or_write_port_error2() {
         let c = Context::new();
 
-        let a = c.module("A");
-        let b = c.module("B");
+        let a = c.module("a", "A");
+        let b = a.module("b", "B");
         let m = b.mem("m", 1, 1);
         let _ = m.read_port(b.low(), b.low());
-
-        let _ = a.instance("b", "B");
 
         // Panic
         generate(a, Vec::new()).unwrap();
@@ -568,13 +556,13 @@ mod tests {
     fn combinational_loop_error() {
         let c = Context::new();
 
-        let a = c.module("a");
+        let a = c.module("a", "A");
         a.output("o", a.input("i", 1));
 
-        let b = c.module("b");
-        let a_inst = b.instance("a_inst", "a");
+        let b = c.module("b", "B");
+        let a_inst = b.module("a_inst", "A");
         let a_inst_o = a_inst.output("o");
-        a_inst.drive_input("i", a_inst_o);
+        a_inst.input("i", a_inst_o);
 
         // Panic
         generate(b, Vec::new()).unwrap();

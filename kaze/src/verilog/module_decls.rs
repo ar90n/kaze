@@ -1,4 +1,5 @@
 use crate::graph;
+use crate::internal_signal;
 
 use std::collections::HashMap;
 
@@ -8,7 +9,13 @@ pub struct InstanceDecls {
 }
 
 pub struct MemDecls<'a> {
-    pub read_signal_names: HashMap<(&'a graph::Signal<'a>, &'a graph::Signal<'a>), ReadSignalNames>,
+    pub read_signal_names: HashMap<
+        (
+            &'a internal_signal::InternalSignal<'a>,
+            &'a internal_signal::InternalSignal<'a>,
+        ),
+        ReadSignalNames,
+    >,
     pub write_address_name: String,
     pub write_value_name: String,
     pub write_enable_name: String,
@@ -27,7 +34,7 @@ pub struct RegisterDecls<'a> {
 }
 
 pub struct ModuleDecls<'a> {
-    pub instances: HashMap<&'a graph::Instance<'a>, InstanceDecls>,
+    pub modules: HashMap<&'a graph::Module<'a>, InstanceDecls>,
     pub mems: HashMap<&'a graph::Mem<'a>, MemDecls<'a>>,
-    pub regs: HashMap<&'a graph::Signal<'a>, RegisterDecls<'a>>,
+    pub regs: HashMap<&'a internal_signal::InternalSignal<'a>, RegisterDecls<'a>>,
 }
