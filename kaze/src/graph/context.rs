@@ -105,6 +105,16 @@ impl<'a> ModuleParent<'a> for Context<'a> {
     fn module(&'a self, instance_name: impl Into<String>, name: impl Into<String>) -> &Module {
         let instance_name = instance_name.into();
         let name = name.into();
+        if self
+            .modules
+            .borrow()
+            .iter()
+            .find(|&x| x.name == name && x.instance_name == instance_name)
+            .is_some()
+        {
+            panic!("Non-unique name")
+        }
+
         let module = self
             .module_arena
             .alloc(Module::new(self, None, instance_name, name));
