@@ -44,6 +44,6 @@ mod graph;
 pub mod runtime;
 pub mod sim;
 mod validation;
-//pub mod verilog;
+pub mod verilog;
 
 pub use graph::*;
